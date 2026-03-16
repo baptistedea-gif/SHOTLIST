@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shotlist</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+--bg:black;
+--text:white;
+--grid:white;
+}
+
+.light{
+--bg:white;
+--text:black;
+--grid:black;
+}
+
+body{
+margin:0;
+font-family:'Montserrat', sans-serif;
+background:var(--bg);
+color:var(--text);
+padding:20px;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+gap:20px;
+}
+
+.title{
+font-size:60px;
+font-weight:800;
+letter-spacing:2px;
+}
+
+.subtitle{
+margin-top:-10px;
+font-size:20px;
+}
+
+.info{
+text-align:left;
+}
+
+/* PROJECT MENU */
+
+.projectMenu{
+margin-bottom:15px;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.toolbar{
+margin-top:15px;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+/* PROD BOX */
+
+.prodBox{
+display:flex;
+align-items:center;
+gap:10px;
+border:1px solid var(--grid);
+padding:12px 15px;
+width:300px;
+margin-bottom:10px;
+border-radius:10px;
+}
+
+.prodBox span{
+font-weight:600;
+min-width:50px;
+}
+
+/* META */
+
+.meta{
+margin-top:6px;
+font-weight:500;
+}
+
+.meta span{
+margin-left:10px;
+min-width:120px;
+display:inline-block;
+}
+
+/* TABLE */
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+border:1px solid var(--grid);
+padding:8px;
+}
+
+td{
+height:35px;
+}
+
+td[contenteditable]{
+cursor:text;
+}
+
+.no{width:50px;}
+.angle{width:200px;}
+.lens{width:120px;}
+
+.status{
+width:80px;
+text-align:center;
+cursor:pointer;
+}
+
+/* CONTROLS */
+
+.controls{
+margin-top:20px;
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+}
+
+button{
+padding:10px 14px;
+border:none;
+font-weight:bold;
+cursor:pointer;
+}
+
+.darkbtn{
+background:white;
+color:black;
+}
+
+.light .darkbtn{
+background:black;
+color:white;
+}
+
+/* STATUS COLORS */
+
+tr.done{
+background:#a8e6a3;
+}
+
+tr.redo{
+background:#f9d49d;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- PROJECT MENU -->
+
+<div class="projectMenu">
+
+<select id="projectSelect" onchange="loadProject()"></select>
+
+<button onclick="newProject()">New Project</button>
+
+</div>
+
+<div class="header">
+
+<div>
+<div class="title">SHOTLIST</div>
+<div class="subtitle" id="projectTitle" contenteditable="true">ROLLING SHOT</div>
+</div>
+
+<div class="info">
+
+<div class="prodBox">
+<span>PROD :</span>
+<div id="prod" contenteditable="true"></div>
+</div>
+
+<div class="meta">DIRECTOR : <span contenteditable="true" id="director"></span></div>
+<div class="meta">CAMERA : <span contenteditable="true" id="camera"></span></div>
+<div class="meta">DATE : <span contenteditable="true" id="date"></span></div>
+
+</div>
+</div>
+
+<!-- TEXT TOOLBAR -->
+
+<div class="toolbar">
+
+<button onclick="formatText('bold')"><b>B</b></button>
+
+<input type="color" onchange="setColor(this.value)">
+
+<select onchange="setFont(this.value)">
+<option value="Montserrat">Montserrat</option>
+<option value="Arial">Arial</option>
+<option value="Courier New">Courier</option>
+</select>
+
+</div>
+
+<table id="shotTable">
+
+<thead>
+
+<tr>
+<th class="no">NO</th>
+<th>DESCRIPTION</th>
+<th class="angle">ANGLE</th>
+<th class="lens">LENS</th>
+<th>STATUS</th>
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+<div class="controls">
+
+<button onclick="addRow()">+ Row</button>
+<button onclick="toggleTheme()" class="darkbtn">Dark / Light</button>
+<button onclick="exportPDF()">Export PDF</button>
+<button onclick="resetTable()">Reset</button>
+
+</div>
+
+</div>
+
+<script>
+
+let currentProject="default"
+
+const table=document.querySelector("#shotTable tbody")
+
+function addRow(){
+
+let row=table.insertRow()
+
+let number=table.rows.length
+
+row.innerHTML=`
+<td>${number}</td>
+<td contenteditable="true"></td>
+<td contenteditable="true"></td>
+<td contenteditable="true"></td>
+<td class="status"></td>
+`
+
+}
+
+for(let i=0;i<17;i++){addRow()}
+
+/* TEXT FORMAT */
+
+function formatText(cmd){
+document.execCommand(cmd,false,null)
+}
+
+function setColor(color){
+document.execCommand("foreColor",false,color)
+}
+
+function setFont(font){
+document.execCommand("fontName",false,font)
+}
+
+/* STATUS */
+
+table.addEventListener("click",function(e){
+
+if(e.target.classList.contains("status")){
+
+const tr=e.target.closest("tr")
+
+const current=e.target.innerText
+
+tr.classList.remove("done","redo")
+
+if(current===""){
+e.target.innerText="✅"
+tr.classList.add("done")
+}
+
+else if(current==="✅"){
+e.target.innerText="🔄"
+tr.classList.add("redo")
+}
+
+else{
+e.target.innerText=""
+}
+
+saveData()
+
+}
+
+})
+
+/* SAVE */
+
+function saveData(){
+
+let data={
+
+title:projectTitle.innerText,
+prod:prod.innerText,
+director:director.innerText,
+camera:camera.innerText,
+date:date.innerText,
+
+rows:[]
+
+}
+
+document.querySelectorAll("#shotTable tbody tr").forEach(tr=>{
+
+let cells=tr.querySelectorAll("td")
+
+data.rows.push({
+
+description:cells[1].innerHTML,
+angle:cells[2].innerHTML,
+lens:cells[3].innerHTML,
+status:cells[4].innerText
+
+})
+
+})
+
+localStorage.setItem("shotlist_"+currentProject,JSON.stringify(data))
+
+}
+
+/* LOAD */
+
+function loadProject(){
+
+currentProject=document.getElementById("projectSelect").value
+
+let data=localStorage.getItem("shotlist_"+currentProject)
+
+if(!data)return
+
+data=JSON.parse(data)
+
+projectTitle.innerText=data.title
+prod.innerText=data.prod
+director.innerText=data.director
+camera.innerText=data.camera
+date.innerText=data.date
+
+table.innerHTML=""
+
+data.rows.forEach((row,i)=>{
+
+let tr=table.insertRow()
+
+tr.innerHTML=`
+<td>${i+1}</td>
+<td contenteditable="true">${row.description}</td>
+<td contenteditable="true">${row.angle}</td>
+<td contenteditable="true">${row.lens}</td>
+<td class="status">${row.status}</td>
+`
+
+if(row.status==="✅")tr.classList.add("done")
+if(row.status==="🔄")tr.classList.add("redo")
+
+})
+
+}
+
+/* PROJECTS */
+
+function newProject(){
+
+let name=prompt("Project name")
+
+if(!name)return
+
+localStorage.setItem("shotlist_"+name,JSON.stringify({rows:[]}))
+
+loadProjectList()
+
+}
+
+function loadProjectList(){
+
+let select=document.getElementById("projectSelect")
+
+select.innerHTML=""
+
+for(let i=0;i<localStorage.length;i++){
+
+let key=localStorage.key(i)
+
+if(key.startsWith("shotlist_")){
+
+let name=key.replace("shotlist_","")
+
+let option=document.createElement("option")
+
+option.value=name
+option.textContent=name
+
+select.appendChild(option)
+
+}
+
+}
+
+}
+
+/* OTHER */
+
+function toggleTheme(){
+document.body.classList.toggle("light")
+}
+
+function exportPDF(){
+window.print()
+}
+
+function resetTable(){
+
+table.innerHTML=""
+
+for(let i=0;i<17;i++){addRow()}
+
+}
+
+/* AUTO SAVE */
+
+document.addEventListener("input",saveData)
+
+loadProjectList()
+
+</script>
+
+</body>
+</html>
